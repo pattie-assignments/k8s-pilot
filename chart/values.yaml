@@ -16,8 +16,10 @@ service:
   port: 80
 
 configMap:
-  datasourceUrl: "jdbc:postgresql://amumal-database.cbysg4i2eto5.ap-northeast-2.rds.amazonaws.com:5432/amumal"
-
+  name: amumal-db-config
+  data:
+    SPRING_DATASOURCE_URL: "jdbc:postgresql://amumal-database.cbysg4i2eto5.ap-northeast-2.rds.amazonaws.com:5432/amumal"
+    
 existingSecrets:
   imagePullSecret: ghcr-secret
   databaseSecret: amumal-db-secret
