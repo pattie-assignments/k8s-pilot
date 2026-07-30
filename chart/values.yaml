@@ -6,7 +6,7 @@ labels:
   partOf: amumal
 image:
   repository: ghcr.io/pattie-assignments/community-service
-  tag: "7b7d0f6a981593910dece8339668b78d0567c54a"
+  tag: "7a7adbe727564a02287b7be02d288894350d18ac"
   pullPolicy: IfNotPresent
 service:
   type: ClusterIP
