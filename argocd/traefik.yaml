@@ -25,7 +25,7 @@ spec:
         # 두 번째 소스의 Git 저장소 루트를 기준으로
         # 사용자 values 파일을 가져옴
         valueFiles:
-          - $values/application/values/traefik-values.yaml
+          - $values/argocd/values/traefik-values.yaml
 
     # 두 번째 소스: 사용자 values 파일이 저장된 Git 저장소
     - repoURL: https://github.com/pattie-assignments/k8s-pilot.git
