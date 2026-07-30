@@ -1,25 +1,20 @@
 replicaCount: 3
-
 labels:
   name: amumal-backend
   tier: backend
   env: dev
   partOf: amumal
-
 image:
   repository: ghcr.io/pattie-assignments/community-service
-  tag: "5ee8e2f08a40a923790b15097106ffada38ae29e"
+  tag: "7b7d0f6a981593910dece8339668b78d0567c54a"
   pullPolicy: IfNotPresent
-
 service:
   type: ClusterIP
   port: 80
-
 configMap:
   name: amumal-db-config
   data:
     SPRING_DATASOURCE_URL: "jdbc:postgresql://amumal-database.cbysg4i2eto5.ap-northeast-2.rds.amazonaws.com:5432/amumal"
-    
 existingSecrets:
   imagePullSecret: ghcr-secret
   databaseSecret: amumal-db-secret
