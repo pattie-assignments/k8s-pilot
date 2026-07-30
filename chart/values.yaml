@@ -18,3 +18,8 @@ configMap:
 existingSecrets:
   imagePullSecret: ghcr-secret
   databaseSecret: amumal-db-secret
+ingress:
+  className: traefik
+  host: api.pattie.cloud
+  path: /
+  pathType: Prefix
