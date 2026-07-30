@@ -19,7 +19,6 @@ spec:
               service:
                 # 같은 Helm Release에서 생성한 백엔드 Service 이름
                 name: {{ .Release.Name }}-service
-
                 port:
                   # Service의 port 값
-                  number: 80
+                  number: {{ .Values.service.port }}
