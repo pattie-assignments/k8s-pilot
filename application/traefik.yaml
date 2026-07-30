@@ -1,0 +1,48 @@
+# Argo CD가 어떤 Traefik Helm chart를 어떤 values로 배포할지 선언하는 Application 리소스
+# Deployment, Service, IngressClass 같은 실제 템플릿은 Traefik chart 안에 존재, 이 파일은 chart와 values 파일을 연결
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+
+metadata:
+  # Argo CD 화면에 표시되는 Application 이름
+  name: traefik
+
+  # Application 리소스 자체는 argocd 네임스페이스에 생성
+  namespace: argocd
+
+spec:
+  # Argo CD의 기본 프로젝트 사용
+  project: default
+
+  sources:
+    - repoURL: https://traefik.github.io/charts
+      chart: traefik
+      targetRevision: "40.2.0"
+      helm:
+        # Helm Release 이름
+        releaseName: traefik
+        valueFiles:
+          - $values/application/values/traefik-values.yaml
+
+    - repoURL: https://github.com/pattie-assignments/k8s-pilot.git
+      targetRevision: HEAD
+      ref: values
+
+  destination:
+    # 현재 Argo CD가 설치된 Kubernetes 클러스터에 배포
+    server: https://kubernetes.default.svc
+
+    # Traefik 관련 Pod, Service 등을 생성할 네임스페이스
+    namespace: traefik
+
+  syncPolicy:
+    automated:
+      # Git 선언에서 사라진 리소스를 클러스터에서도 삭제
+      prune: true
+
+      # 클러스터에서 수동 변경하면 Git 선언 상태로 복원
+      selfHeal: true
+
+    syncOptions:
+      # traefik 네임스페이스가 없으면 자동 생성
+      - CreateNamespace=true
