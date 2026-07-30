@@ -7,32 +7,38 @@ metadata:
   # Argo CD 화면에 표시되는 Application 이름
   name: traefik
 
-  # Application 리소스 자체는 argocd 네임스페이스에 생성
+  # Application 리소스가 생성되는 네임스페이스
   namespace: argocd
 
 spec:
-  # Argo CD의 기본 프로젝트 사용
   project: default
 
   sources:
+    # 실제 Deployment, Service 등의 템플릿이 있는
+    # Traefik 공식 Helm Chart
     - repoURL: https://traefik.github.io/charts
       chart: traefik
       targetRevision: "40.2.0"
       helm:
-        # Helm Release 이름
         releaseName: traefik
+
+        # 두 번째 소스의 Git 저장소 루트를 기준으로
+        # 사용자 values 파일을 가져옴
         valueFiles:
           - $values/application/values/traefik-values.yaml
 
+    # 두 번째 소스: 사용자 values 파일이 저장된 Git 저장소
     - repoURL: https://github.com/pattie-assignments/k8s-pilot.git
-      targetRevision: HEAD
+      targetRevision: main
+
+      # 첫 번째 소스에서 $values로 참조할 수 있게 별칭 지정
       ref: values
 
   destination:
     # 현재 Argo CD가 설치된 Kubernetes 클러스터에 배포
     server: https://kubernetes.default.svc
 
-    # Traefik 관련 Pod, Service 등을 생성할 네임스페이스
+    # Traefik Pod, Service, IngressClass가 생성될 네임스페이스
     namespace: traefik
 
   syncPolicy:
