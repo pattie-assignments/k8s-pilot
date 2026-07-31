@@ -19,8 +19,8 @@ resources:
     cpu: 500m
     memory: 512Mi
 
-# 밖으로 로그 전송만 하는 클라이언트, 외부 요청을 받을 필요가 없으므로 Service 생성 X
-# 중앙 로그 수집기가 있다면 필요하겠지만, 현재는 localfile source만 사용하므로 필요 없음
+# Vector가 노드의 로그 파일을 직접 읽어 Loki로 전송하므로,
+# 다른 Pod가 Vector에 로그를 전송하기 위한 Service는 생성하지 않음
 service:
   enabled: false
 
@@ -45,7 +45,7 @@ readinessProbe:
 
 # Vector 프로그램의 파이프라인 설정
 customConfig:
-  data_dir: /vector-data-dir # 로그 파일을 어디까지 읽었는지 체크포인트 저장
+  data_dir: /vector-data-dir # 로그 파일을 어디까지 읽었는지 체크포인트, loki 전송 대기 로그 저장
 
   api:
     enabled: true
@@ -109,5 +109,6 @@ customConfig:
       # Loki가 잠시 느리거나 통신이 끊겼을 때 로그를 disk에 임시 저장
       buffer:
         type: disk
+        # 노드 당 512 MiB (임의값), 추후 Vector의 buffer_size_bytes 지표를 보고 수정
         max_size: 536870912
         when_full: block
