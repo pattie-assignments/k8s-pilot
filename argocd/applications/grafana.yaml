@@ -4,8 +4,6 @@ kind: Application
 metadata:
   name: grafana
   namespace: argocd
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io # 이 리소스 삭제 시 ArgoCD가 하위 리소스도 정리
 
 spec:
   project: default
