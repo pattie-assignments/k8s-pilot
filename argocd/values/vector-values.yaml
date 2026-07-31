@@ -34,13 +34,11 @@ persistence:
 
 # customConfig 사용 시 API를 직접 활성화해야 Probe 사용 가능
 livenessProbe:
-  gRPC:
-    path: /health
+  grpc:
     port: 8686
 
 readinessProbe:
-  gRPC:
-    path: /health
+  grpc:
     port: 8686
 
 # Vector 프로그램의 파이프라인 설정
