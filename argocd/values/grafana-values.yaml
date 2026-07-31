@@ -41,6 +41,21 @@ grafana.ini:
     domain: grafana.pattie.cloud # 접속 URL
     root_url: https://grafana.pattie.cloud/ # 외부에 노출되는 기준을 HTTPS로 고정
 
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://prometheus-server.monitoring.svc.cluster.local
+        isDefault: true
+      - name: Loki
+        type: loki
+        access: proxy
+        # gateway를 꺼서 Loki 서비스에 직접 붙으므로, 기본 HTTP 80이 아니라 Loki API 포트 3100을 명시
+        url: http://loki.monitoring.svc.cluster.local:3100
+
 # Secret값 사용
 admin:
   existingSecret: grafana-admin-secret
