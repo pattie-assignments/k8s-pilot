@@ -28,9 +28,18 @@ resources:
     cpu: 500m
     memory: 512Mi
 
-# Ingress는 접속 단계에서 추가
 ingress:
-  enabled: false
+  enabled: true # grafana용 ingress 생성
+  ingressClassName: traefik
+  hosts:
+    - grafana.pattie.cloud
+  path: /
+  pathType: Prefix
+
+grafana.ini:
+  server:
+    domain: grafana.pattie.cloud # 접속 URL
+    root_url: https://grafana.pattie.cloud/ # 외부에 노출되는 기준을 HTTPS로 고정
 
 # Secret값 사용
 admin:
