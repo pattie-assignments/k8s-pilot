@@ -34,12 +34,12 @@ persistence:
 
 # customConfig 사용 시 API를 직접 활성화해야 Probe 사용 가능
 livenessProbe:
-  httpGet:
+  gRPC:
     path: /health
     port: 8686
 
 readinessProbe:
-  httpGet:
+  gRPC:
     path: /health
     port: 8686
 
