@@ -1,0 +1,40 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+
+metadata:
+  name: loki
+  namespace: argocd
+
+spec:
+  project: default
+
+  sources:
+    # 외부 Loki Helm Chart
+    - repoURL: https://grafana-community.github.io/helm-charts
+      chart: loki
+      targetRevision: 18.7.1
+
+      helm:
+        releaseName: loki
+
+        # 아래 Git 저장소의 values 파일 사용
+        valueFiles:
+          - $values/argocd/values/loki-values.yaml
+
+    # 현재 GitOps 저장소
+    - repoURL: https://github.com/pattie-assignments/k8s-pilot.git
+      targetRevision: main
+      ref: values
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+    syncOptions:
+      - CreateNamespace=true
+      - PruneLast=true # prune(더 이상 Git에 없는 리소스 삭제)를 sync 작업의 "마지막 단계"에 수행

@@ -1,0 +1,161 @@
+# 소규모 환경이므로 Loki의 모든 기능을 하나의 프로세스로 실행
+deploymentMode: Monolithic
+
+loki:
+  # 단일 시스템용이므로 테넌트 구분 헤더를 사용하지 않음
+  # 모든 요청은 내부적으로 "fake" 테넌트(기본값)로 처리됨
+  auth_enabled: false
+
+  commonConfig:
+    # Loki Pod가 하나뿐이라 복제할 다른 인스턴스가 없음
+    replication_factor: 1
+
+  storage:
+    # 별도 S3 없이 PVC의 filesystem에 로그와 인덱스를 저장
+    type: filesystem
+
+  schemaConfig:
+    configs:
+      # 이 날짜 이후 저장되는 로그에 아래 스키마를 적용
+      - from: "2026-07-29"
+
+        # 로그 chunk를 찾기 위한 인덱스로 TSDB 사용
+        store: tsdb
+
+        # TSDB 인덱스와 로그 chunk를 filesystem에 저장
+        object_store: filesystem
+
+        # TSDB와 Structured Metadata를 지원하는 스키마
+        schema: v13
+
+        index:
+          # 생성되는 인덱스 파일의 이름 접두사
+          prefix: loki_index_
+
+          # 일 단위 인덱스를 만들며 retention 사용에도 필요
+          period: 24h
+
+  limits_config:
+    # 로그 본문과 함께 비인덱싱 key-value 메타데이터 저장 허용
+    allow_structured_metadata: true
+
+    # Grafana의 로그 사용량 분석에 사용하는 Log Volume API 활성화
+    volume_enabled: true
+
+    # 로그를 7일간 보관
+    # 장애 조사에 필요한 기간, 하루 로그 저장량, pvc 여유공간을 고려하지 않은 임의의 값
+    retention_period: 168h
+
+  compactor: # 인덱스 파일을 병합, 정리 (기본값)
+    working_directory: /var/loki/compactor
+
+    # 삭제 요청, 상태 저장 위치
+    delete_request_store: filesystem
+
+    # retention_period가 지난 로그를 삭제
+    retention_enabled: true
+
+singleBinary:
+  # Loki 차트 기본값, Pod별 PVC를 일관되게 관리하기 위해 StatefulSet 사용
+  kind: StatefulSet
+
+  # filesystem 저장소를 사용하는 단일 인스턴스 구성
+  replicas: 1
+
+  # Loki를 monitoring=yes 라벨이 있는 노드에만 배치
+  nodeSelector:
+    monitoring: "yes"
+
+  persistence:
+    # Pod가 재생성되어도 로그가 남도록 PVC 사용
+    enabled: true
+
+    # StatefulSet 삭제나 축소 시 PVC 자동 삭제 방지
+    enableStatefulSetAutoDeletePVC: false
+
+    # 로컬 노드 디스크 사용 (노드 또는 디스크 장애에는 취약)
+    storageClass: local-path
+
+    # 하나의 노드에서만 읽기/쓰기 마운트
+    accessModes:
+      - ReadWriteOnce
+
+    # 로그, 인덱스, Compactor 작업 파일 저장 용량
+    size: 5Gi
+
+  resources:
+    # 스케줄링 시 Loki에 최소한으로 보장할 자원
+    requests:
+      cpu: 200m
+      memory: 512Mi
+
+    # Loki가 과도하게 자원을 사용하지 않도록 상한 설정
+    limits:
+      cpu: "1"
+      memory: 1Gi
+
+# 단일 Loki이므로 별도 Nginx 프록시 없이 Service에 직접 연결
+gateway:
+  enabled: false
+
+# 테스트 로그를 넣고 조회하는 E2E 검증 Pod 미운영
+lokiCanary:
+  enabled: false
+
+# Helm 테스트가 Canary에 의존하므로 함께 비활성화
+test:
+  enabled: false
+
+# 작은 데이터 규모라 별도 Memcached Pod 운영 비용이 더 크다
+chunksCache:
+  enabled: false
+
+# 쿼리 지연이나 반복 조회가 많아지면 활성화 검토
+resultsCache:
+  enabled: false
+
+# 현재 PVC filesystem을 사용하므로 내장 MinIO(Amazon S3 API 호환 Object Storage) 비활성화
+minio:
+  enabled: false
+
+# Monolithic 모드에서는 아래 역할이 singleBinary 내부에서 실행됨
+# 별도 컴포넌트 Pod가 만들어지지 않도록 replica를 0으로 설정
+backend:
+  replicas: 0
+
+read:
+  replicas: 0
+
+write:
+  replicas: 0
+
+ingester:
+  replicas: 0
+
+querier:
+  replicas: 0
+
+queryFrontend:
+  replicas: 0
+
+queryScheduler:
+  replicas: 0
+
+distributor:
+  replicas: 0
+
+# Compactor 기능은 singleBinary 내부에서 실행
+compactor:
+  replicas: 0
+
+indexGateway:
+  replicas: 0
+
+bloomPlanner:
+  replicas: 0
+
+bloomBuilder:
+  replicas: 0
+
+bloomGateway:
+  replicas: 0
