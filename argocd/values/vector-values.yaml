@@ -1,0 +1,111 @@
+# 노드마다 Vector Pod 1개를 실행하는 DaemonSet 모드
+role: Agent
+
+# Vector 자체 로그를 다시 수집하지 않도록 지정 (기본값)
+podLabels:
+  vector.dev/exclude: "true"
+
+# Control Plane 노드 로그도 수집
+tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# 밖으로 로그 전송만 하는 클라이언트, 외부 요청을 받을 필요가 없으므로 Service 생성 X
+# 중앙 로그 수집기가 있다면 필요하겠지만, 현재는 localfile source만 사용하므로 필요 없음
+service:
+  enabled: false
+
+serviceHeadless:
+  enabled: false
+
+persistence:
+  hostPath: # 로그 파일을 어디까지 읽었는지 체크포인트를 보존
+    enabled: true
+    path: /var/lib/vector
+
+# customConfig 사용 시 API를 직접 활성화해야 Probe 사용 가능
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8686
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 8686
+
+# Vector 프로그램의 파이프라인 설정
+customConfig:
+  data_dir: /vector-data-dir # 로그 파일을 어디까지 읽었는지 체크포인트 저장
+
+  api:
+    enabled: true
+    address: 0.0.0.0:8686
+    playground: false
+
+  sources:
+    # 현재 노드의 Kubernetes Pod 로그 수집
+    kubernetes_logs:
+      type: kubernetes_logs
+
+  transforms:
+    # 저장소와 무관한 공통 로그 필드 생성
+    normalize_logs:
+      type: remap
+      inputs:
+        - kubernetes_logs
+      source: |
+        .cluster = "k8s-pilot"
+        .namespace = .kubernetes.pod_namespace
+        .pod = .kubernetes.pod_name
+        .container = .kubernetes.container_name
+        .node = .kubernetes.pod_node_name
+
+        .service = (
+          .kubernetes.pod_labels."app.kubernetes.io/name"
+          ?? .kubernetes.pod_labels.app
+          ?? .kubernetes.container_name
+        )
+
+  # 최종 전송 목적지 - loki로 전달
+  sinks:
+    loki: # 임의로 정한 sink 이름
+      type: loki # Loki Push API 규격으로 변환해서 HTTP 요청으로 전송
+      inputs:
+        - normalize_logs # 정규화가 완료된 로그를 입력받음
+
+      endpoint: http://loki.monitoring.svc.cluster.local:3100
+
+      encoding:
+        codec: json
+
+      remove_timestamp: false #json 본문의 timestamp 필드 유지 (인덱싱용 timestamp와 별개)
+      out_of_order_action: accept # 조금 늦게 도착해도 조작/삭제 없이 loki에 전송 (기본값)
+
+      # Loki 라벨로 포함할 필드를 지정하는 목록
+      labels:
+        cluster: |-
+          {{ print "{{ cluster }}" }}
+        namespace: |-
+          {{ print "{{ namespace }}" }}
+        service: |-
+          {{ print "{{ service }}" }}
+        container: |-
+          {{ print "{{ container }}" }}
+        node: |-
+          {{ print "{{ node }}" }}
+
+      # Loki가 잠시 느리거나 통신이 끊겼을 때 로그를 disk에 임시 저장
+      buffer:
+        type: disk
+        max_size: 536870912
+        when_full: block

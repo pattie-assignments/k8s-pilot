@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+
+metadata:
+  name: vector
+  namespace: argocd
+
+spec:
+  project: default
+
+  sources:
+    - repoURL: https://helm.vector.dev
+      chart: vector
+      targetRevision: 0.57.0
+
+      helm:
+        releaseName: vector
+        valueFiles:
+          - $values/argocd/values/vector-values.yaml
+
+    - repoURL: https://github.com/pattie-assignments/k8s-pilot.git
+      targetRevision: main
+      ref: values
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+    syncOptions:
+      - CreateNamespace=true
+      - PruneLast=true
