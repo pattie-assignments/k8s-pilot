@@ -1,6 +1,9 @@
 # 노드마다 Vector Pod 1개를 실행하는 DaemonSet 모드
 role: Agent
 
+image: 
+  base: debian
+
 # Vector 자체 로그를 다시 수집하지 않도록 지정 (기본값)
 podLabels:
   vector.dev/exclude: "true"
