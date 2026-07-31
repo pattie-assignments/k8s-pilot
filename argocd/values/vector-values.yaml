@@ -93,15 +93,15 @@ customConfig:
       # Loki 라벨로 포함할 필드를 지정하는 목록
       labels:
         cluster: |-
-          {{ print "{{ cluster }}" }}
+          {{ print "cluster-{{ cluster }}" }}
         namespace: |-
-          {{ print "{{ namespace }}" }}
+          {{ print "ns-{{ namespace }}" }}
         service: |-
-          {{ print "{{ service }}" }}
+          {{ print "svc-{{ service }}" }}
         container: |-
-          {{ print "{{ container }}" }}
+          {{ print "container-{{ container }}" }}
         node: |-
-          {{ print "{{ node }}" }}
+          {{ print "node-{{ node }}" }}
 
       # Loki가 잠시 느리거나 통신이 끊겼을 때 로그를 disk에 임시 저장
       buffer:
