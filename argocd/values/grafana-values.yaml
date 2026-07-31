@@ -1,0 +1,39 @@
+replicas: 1
+
+deploymentStrategy:
+  # Grafana는 기본 메타데이터 DB로 내장 sqlite를 사용, sqlite는 파일 하나를 잠그면서 사용하는 DB
+  # 따라서 업데이트 시 두 노드에서 쓰기 마운트 하지 않도록 기존 Pod를 모두 종료 후 생성하도록 지정
+  type: Recreate
+
+service:
+  type: ClusterIP
+  port: 80
+
+persistence:
+  enabled: true
+  type: pvc
+  storageClassName: local-path
+  accessModes:
+    - ReadWriteOnce # 하나의 노드에서만 쓰기 마운트할 수 있다
+  size: 1Gi
+
+nodeSelector:
+  monitoring: "yes"
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# Ingress는 접속 단계에서 추가
+ingress:
+  enabled: false
+
+# Secret값 사용
+admin:
+  existingSecret: grafana-admin-secret
+  userKey: admin-user
+  passwordKey: admin-password

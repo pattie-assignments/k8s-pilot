@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+
+metadata:
+  name: grafana
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io # 이 리소스 삭제 시 ArgoCD가 하위 리소스도 정리
+
+spec:
+  project: default
+
+  sources:
+    - repoURL: https://grafana-community.github.io/helm-charts
+      chart: grafana
+      targetRevision: 12.10.0
+      helm:
+        releaseName: grafana
+        valueFiles:
+          - $values/argocd/values/grafana-values.yaml
+
+    - repoURL: https://github.com/pattie-assignments/k8s-pilot.git
+      targetRevision: main
+      ref: values
+
+  destination:
+    server: https://kubernetes.default.svc # 현재 클러스터에 배포
+    namespace: monitoring # monitoring 네임스페이스에 배포
+
+  syncPolicy:
+    automated:
+      prune: true # git에서 제외된 리소스는 클러스터에서도 삭제
+      selfHeal: true # 클러스터 수동 변경 시 git 상태로 되돌림
+    syncOptions:
+      - CreateNamespace=true
