@@ -31,3 +31,4 @@ spec:
       selfHeal: true # 클러스터 수동 변경 시 git 상태로 되돌림
     syncOptions:
       - CreateNamespace=true
+      - PruneLast=true
