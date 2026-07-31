@@ -70,11 +70,13 @@ customConfig:
         .container = .kubernetes.container_name
         .node = .kubernetes.pod_node_name
 
-        .service = (
-          .kubernetes.pod_labels."app.kubernetes.io/name"
-          ?? .kubernetes.pod_labels.app
-          ?? .kubernetes.container_name
-        )
+        if exists(.kubernetes.pod_labels."app.kubernetes.io/name") {
+          .service = .kubernetes.pod_labels."app.kubernetes.io/name"
+        } else if exists(.kubernetes.pod_labels.app) {
+          .service = .kubernetes.pod_labels.app
+        } else {
+          .service = .kubernetes.container_name
+        }
 
   # 최종 전송 목적지 - loki로 전달
   sinks:
