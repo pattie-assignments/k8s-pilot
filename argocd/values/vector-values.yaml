@@ -46,9 +46,8 @@ customConfig:
   data_dir: /vector-data-dir # 로그 파일을 어디까지 읽었는지 체크포인트, loki 전송 대기 로그 저장
 
   api:
-    enabled: true
-    address: 0.0.0.0:8686
-    playground: false
+    enabled: true # kubelet의 gRPC 헬스체크를 위해 Vector 관리 API 활성화
+    address: 0.0.0.0:8686 # kubelet이 Pod IP의 8686 포트로 접근할 수 있도록
 
   sources:
     # 현재 노드의 Kubernetes Pod 로그 수집
