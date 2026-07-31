@@ -1,6 +1,6 @@
 # Traefik Helm chart 템플릿에 주입할 values만 정의
 deployment:
-  replicas: 1
+  replicas: 2
 
 service:
   spec:
