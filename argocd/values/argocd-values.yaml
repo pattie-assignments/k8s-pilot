@@ -1,0 +1,26 @@
+applicationSet:
+  nodeSelector:
+    kubernetes.io/hostname: ip-172-31-35-123
+
+controller:
+  nodeSelector:
+    kubernetes.io/hostname: ip-172-31-35-123
+
+repoServer:
+  nodeSelector:
+    kubernetes.io/hostname: ip-172-31-35-123
+
+server:
+  extraArgs:
+    - --insecure
+
+  ingress:
+    enabled: false
+
+  nodeSelector:
+    kubernetes.io/hostname: ip-172-31-35-123
+
+  service:
+    type: NodePort
+    nodePortHttp: 32081
+    nodePortHttps: 32481
