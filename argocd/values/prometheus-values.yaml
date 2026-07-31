@@ -11,15 +11,18 @@ server:
     size: 2Gi
 
 alertmanager:
+  # Alertmanager를 함께 배포해 Prometheus 알림을 처리
   enabled: true
 
   nodeSelector:
     monitoring: "yes"
 
   persistence:
+    # Alertmanager 상태를 유지하기 위해 영속 볼륨을 사용
     enabled: true
     storageClass: local-path
     size: 1Gi
 
 prometheus-pushgateway:
+  # Pushgateway는 단발성 작업 메트릭 수집용이므로, 현재 환경에서는 사용하지 않는다.
   enabled: false
