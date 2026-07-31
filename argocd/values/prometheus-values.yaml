@@ -1,0 +1,25 @@
+server:
+  nodeSelector:
+    monitoring: "yes"
+
+  service:
+    type: ClusterIP
+
+  persistentVolume:
+    enabled: true
+    storageClass: local-path
+    size: 2Gi
+
+alertmanager:
+  enabled: true
+
+  nodeSelector:
+    monitoring: "yes"
+
+  persistence:
+    enabled: true
+    storageClass: local-path
+    size: 1Gi
+
+prometheus-pushgateway:
+  enabled: false
