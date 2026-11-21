@@ -1,6 +1,6 @@
 {{- range $store := list
   (dict "name" "mysql" "image" "mysql:8.0" "port" 3306 "disk" "5Gi" "path" "/var/lib/mysql" "enabled" .Values.mysql.enabled)
-  (dict "name" "redis" "image" "redis:7.2-alpine" "port" 6379 "disk" "1Gi" "path" "/data" "enabled" true)
+  (dict "name" "redis" "image" "redis:7.2-alpine" "port" 6379 "disk" "1Gi" "path" "/data" "enabled" .Values.redis.enabled)
 }}
 {{- if $store.enabled }}
 ---
@@ -10,6 +10,7 @@ metadata:
   name: {{ $store.name }}-data
   annotations:
     argocd.argoproj.io/sync-options: Prune=false
+    argocd.argoproj.io/compare-options: IgnoreExtraneous
 spec:
   accessModes: [ReadWriteOnce]
   storageClassName: local-path

@@ -16,6 +16,16 @@ spec:
         - name: storage.nfsServer
           value: "172.31.12.37"
           forceString: true
+        - name: mysql.enabled
+          value: "false"
+        - name: mysql.host
+          value: "172.31.2.203"
+          forceString: true
+        - name: redis.enabled
+          value: "false"
+        - name: redis.host
+          value: "172.31.2.203"
+          forceString: true
 
   destination:
     server: https://kubernetes.default.svc

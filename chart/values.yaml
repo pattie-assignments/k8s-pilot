@@ -23,5 +23,6 @@ mysql:
   database: community
   username: community
 redis:
+  enabled: true
   host: redis
   port: 6379
