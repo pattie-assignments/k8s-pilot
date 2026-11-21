@@ -22,7 +22,7 @@ export const options = {
 
 export default function () {
   const response = http.get(
-    'http://community-service.community-service.svc.cluster.local/v1/brands',
+    'http://community-service/v1/brands',
     { timeout: '2s' },
   );
   check(response, { 'HTTP 200': (result) => result.status === 200 });

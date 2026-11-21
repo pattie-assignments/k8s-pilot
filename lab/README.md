@@ -49,7 +49,7 @@ umount "$share"
 rmdir "$share"
 ```
 
-Control plane에서 Traefik과 관측 도구를 설치한다. 이 실습 차트의 앱은 아래에서 Helm으로 직접 설치한다.
+Control plane에서 Argo CD와 모니터링용 Secret을 준비한다. Traefik, 관측 도구, 앱은 `root-app`이 하위 Application으로 배포한다.
 
 ```bash
 helm repo add argo https://argoproj.github.io/argo-helm
@@ -63,14 +63,13 @@ if ! kubectl -n monitoring get secret grafana-admin-secret >/dev/null 2>&1; then
     --from-literal=admin-user=admin --from-file=admin-password="$secret_file"
   rm -f "$secret_file"
 fi
-for app in argocd traefik prometheus grafana loki vector; do
-  kubectl apply -f "argocd/applications/$app.yaml"
-done
 ```
 
-## 3. 애플리케이션 배포
+## 3. 기존 Argo CD 경로로 배포
 
-Control plane에서 네임스페이스와 Secret을 준비한다. 기존 Secret이 있으면 그대로 사용한다.
+Git의 `argocd/applications/amumal-server.yaml`에서 `storage.nfsServer`가 이 환경의 control plane 프라이빗 IP인지 확인한다. `chart/values.yaml`의 `image.tag`는 두 워커에 가져온 이미지 태그와 일치해야 한다. 새 환경에서 값이 다르면 Git에 먼저 반영한다.
+
+Control plane에서 네임스페이스와 Secret을 준비한다. 기존 Secret을 재사용하면 MySQL·Redis 자격 증명을 유지할 수 있다.
 
 ```bash
 kubectl create namespace community-service --dry-run=client -o yaml | kubectl apply -f -
@@ -82,20 +81,29 @@ if ! kubectl -n community-service get secret community-service-credentials >/dev
   kubectl -n community-service create secret generic community-service-credentials --from-env-file="$secret_file"
   rm -f "$secret_file"
 fi
-helm upgrade --install community-service lab/chart -n community-service \
-  --set-string storage.nfsServer=CONTROL_PLANE_IP --wait --timeout 8m
+```
+
+이전에 수동 구축한 클러스터에 적용할 때는 기존 `community-service` 리소스의 이름과 NFS PVC를 확인한다. 이전에 중지한 `amumal-server`용 deny sync window가 있다면, Git의 변경이 보이는지 확인한 뒤 Argo CD의 `default` 프로젝트에서 해당 window만 제거한다. 이전 배포의 리소스가 prune 대상으로 남아 있다면 대상이 `backend` 네임스페이스의 이전 리소스인지 확인한다.
+
+```bash
+kubectl apply -f argocd/bootstrap/root-app.yaml
+kubectl -n argocd get application root-app amumal-server
+kubectl -n community-service rollout status deployment/community-service --timeout=8m
 kubectl -n community-service get pods -o wide
 curl -fsS -H 'Host: api.pattie.cloud' http://CONTROL_PLANE_IP:32080/v1/brands
 ```
 
-실습 DB를 외부 MySQL로 구성할 때는 DB 접속을 준비하고 Secret에 그 계정의 비밀번호를 설정한 뒤, 최초 설치에 `--set mysql.enabled=false --set-string mysql.host=MYSQL_HOST`를 추가한다. 기존 데이터를 옮기는 경우 먼저 백업과 복원을 별도로 진행한다.
+외부 MySQL을 사용하는 환경에서는 Git의 `chart/values.yaml`에 `mysql.enabled: false`와 접속 정보를 설정하고, Kubernetes Secret의 `DB_PASSWORD`를 외부 DB 계정에 맞춘다. 기존 데이터를 옮기는 경우 먼저 백업과 복원을 진행한다.
+
+GHCR 이미지를 사용하는 경우 `chart/values.yaml`의 `image.repository`, `image.tag`, `image.pullPolicy`를 발행된 이미지에 맞춘다. 비공개 패키지면 배포 네임스페이스에 기존 이미지 풀 Secret을 준비하고 `image.pullSecret`에 이름을 적는다. 현재 `workspace-v2/community-service`의 기존 GHCR 발행 및 GitOps 태그 갱신 워크플로는 비활성화 상태다.
 
 ## 4. 실습 실행
 
 ```bash
-job="k6-lab-$(date +%s)"
-kubectl -n community-service create job "$job" --from=cronjob/community-service-k6
-kubectl -n community-service logs "job/$job" -f
+kubectl -n community-service create configmap community-service-k6 \
+  --from-file=smoke.js=lab/loadtest/k6-smoke.js --dry-run=client -o yaml | kubectl apply -f -
+job=$(kubectl -n community-service create -f lab/loadtest/job.yaml -o name)
+kubectl -n community-service logs "$job" -f --pod-running-timeout=2m
 ```
 
 워커 재부팅은 [FIS 실행 절차](https://github.com/workspace-v2/terraform/blob/main/k8s-pilot/README.md#fis-워커-재부팅)를 따른다.
