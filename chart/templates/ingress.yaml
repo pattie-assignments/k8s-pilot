@@ -2,12 +2,22 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: community-service
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   ingressClassName: {{ .Values.ingress.className | quote }}
   rules:
     - host: {{ .Values.ingress.host | quote }}
       http:
         paths:
+          {{- range list "/v1/actuator/health" "/v1/actuator/health/readiness" "/v1/actuator/health/liveness" }}
+          - path: {{ . }}
+            pathType: Exact
+            backend:
+              service:
+                name: community-service-management
+                port: { name: management }
+          {{- end }}
           - path: {{ .Values.ingress.path | quote }}
             pathType: {{ .Values.ingress.pathType }}
             backend:
