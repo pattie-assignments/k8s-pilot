@@ -1,0 +1,6 @@
+apiVersion: v2
+name: community-service-lab
+description: Community service deployed on kubeadm lab workers
+type: application
+version: 0.1.0
+appVersion: "25aebbc"
