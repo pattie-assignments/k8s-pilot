@@ -38,3 +38,5 @@ Kubernetes 기반 애플리케이션 배포 환경을 구축하고, **GitHub Act
 ## 4. kubeadm 실습
 
 [AWS 인프라 준비](https://github.com/workspace-v2/terraform/tree/main/k8s-pilot) 후 [클러스터 조인과 Helm 배포 절차](lab/README.md)를 따라 실습 환경을 재현할 수 있습니다.
+
+실습 환경의 `community-service`도 기존 `root-app → amumal-server → chart/` 경로로 배포합니다. 첫 동기화는 워커에 올린 이미지 태그를 `chart/values.yaml`에서 지정합니다.
